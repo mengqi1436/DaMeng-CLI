@@ -1,0 +1,322 @@
+# dmcli 配置示例文件
+# 复制此文件为 .dmclirc.yaml 或 ~/.config/dmcli/config.yaml 并根据实际环境修改
+
+# ==================== 全局默认值 ====================
+# 所有连接的默认配置，可被具体连接配置覆盖
+defaults:
+  host: localhost
+  port: 5236
+  user: SYSDBA
+  password: ""  # 建议使用密码管理方式，不要明文存储
+  charset: UTF-8
+  compatibleMode: dm  # dm | oracle | mysql
+  connectTimeout: 30000  # 连接超时（毫秒）
+  queryTimeout: 60000    # 查询超时（毫秒）
+
+# ==================== 连接配置 ====================
+# 定义多个数据库连接，通过名称引用
+connections:
+  # 本地开发环境
+  local:
+    host: localhost
+    port: 5236
+    user: SYSDBA
+    password: "SYSDBA"
+    database: DAMENG
+    schema: SYSDBA
+    charset: UTF-8
+    compatibleMode: dm
+
+  # 测试环境
+  test:
+    host: 192.168.1.100
+    port: 5236
+    user: test_user
+    password:
+      source: env
+      key: DM_TEST_PASSWORD  # 从环境变量读取密码
+    database: TEST_DB
+    schema: APP
+    role: replica  # 从库/只读
+
+  # 生产环境 - 主库
+  prod-primary:
+    host: 10.0.1.10
+    port: 5236
+    user: app_user
+    password:
+      source: file
+      path: /etc/dmcli/prod-password.txt  # 从文件读取密码
+    database: PROD_DB
+    schema: APP
+    role: primary  # 主库/可写
+    connectTimeout: 10000
+    queryTimeout: 30000
+    options:
+      LOGIN_TIMEOUT: "10000"
+      SOCKET_TIMEOUT: "60000"
+
+  # 生产环境 - 从库
+  prod-replica:
+    host: 10.0.1.11
+    port: 5236
+    user: app_user
+    password:
+      source: file
+      path: /etc/dmcli/prod-password.txt
+    database: PROD_DB
+    schema: APP
+    role: replica
+
+  # Oracle 兼容模式连接
+  oracle-compat:
+    host: 192.168.1.200
+    port: 5236
+    user: oracle_user
+    password:
+      source: env
+      key: DM_ORACLE_PASSWORD
+    database: ORACLE_DB
+    compatibleMode: oracle
+    charset: UTF-8
+
+  # MySQL 兼容模式连接
+  mysql-compat:
+    host: 192.168.1.201
+    port: 5236
+    user: mysql_user
+    password:
+      source: env
+      key: DM_MYSQL_PASSWORD
+    database: MYSQL_DB
+    compatibleMode: mysql
+    charset: UTF-8
+
+# ==================== 连接分组 ====================
+# 将多个连接按环境或用途分组，便于批量操作
+groups:
+  # 开发环境组
+  development:
+    - local
+    description: "本地开发环境连接"
+
+  # 测试环境组
+  testing:
+    - test
+    description: "测试环境连接"
+
+  # 生产环境组（包含主库和从库）
+  production:
+    - prod-primary
+    - prod-replica
+    description: "生产环境连接（主从）"
+
+  # 所有只读连接
+  readonly:
+    - test
+    - prod-replica
+    description: "所有只读连接"
+
+  # 兼容模式连接
+  compatibility:
+    - oracle-compat
+    - mysql-compat
+    description: "兼容模式测试连接"
+
+# ==================== 连接模板 ====================
+# 定义模板配置，通过 extends 字段继承，减少重复配置
+templates:
+  # 基础模板
+  base:
+    charset: UTF-8
+    compatibleMode: dm
+    connectTimeout: 30000
+    queryTimeout: 60000
+
+  # 生产环境模板
+  production:
+    charset: UTF-8
+    compatibleMode: dm
+    connectTimeout: 10000
+    queryTimeout: 30000
+    role: primary
+    options:
+      LOGIN_TIMEOUT: "10000"
+      SOCKET_TIMEOUT: "60000"
+
+  # 只读从库模板
+  replica:
+    charset: UTF-8
+    compatibleMode: dm
+    connectTimeout: 10000
+    queryTimeout: 60000
+    role: replica
+
+# ==================== 扩展连接 ====================
+# 使用模板继承的连接配置
+extendedConnections:
+  # 从基础模板继承
+  dev-local:
+    extends: base
+    host: localhost
+    port: 5236
+    user: SYSDBA
+    password: "SYSDBA"
+    database: DEV_DB
+
+  # 从生产模板继承
+  prod-main:
+    extends: production
+    host: 10.0.1.10
+    port: 5236
+    user: app_user
+    password:
+      source: vault
+      mount: secret
+      path: dm/prod
+    database: PROD_DB
+    schema: APP
+
+  # 从只读模板继承
+  prod-readonly:
+    extends: replica
+    host: 10.0.1.11
+    port: 5236
+    user: readonly_user
+    password:
+      source: vault
+      mount: secret
+      path: dm/prod-readonly
+    database: PROD_DB
+    schema: APP
+
+# ==================== CLI 行为配置 ====================
+cli:
+  # 默认连接（未指定时使用）
+  defaultConnection: local
+
+  # 默认输出格式: table | json | csv | tsv
+  outputFormat: table
+
+  # 结果集最大显示行数
+  maxRows: 1000
+
+  # 是否显示执行时间
+  showTiming: true
+
+  # 是否确认危险操作（DROP, DELETE, TRUNCATE）
+  confirmDangerous: true
+
+  # 历史记录文件路径
+  historyFile: ~/.dmcli/history
+
+  # 外部编辑器（用于 :edit 命令）
+  editor: vim  # 可改为 code, nano 等
+
+# ==================== 连接池配置 ====================
+pool:
+  # 最大连接数
+  maxSize: 10
+
+  # 最小空闲连接数
+  minIdle: 2
+
+  # 获取连接超时（毫秒）
+  acquireTimeout: 30000
+
+  # 空闲连接超时（毫秒）
+  idleTimeout: 600000  # 10 分钟
+
+  # 连接最大生命周期（毫秒）
+  maxLifetime: 1800000  # 30 分钟
+
+  # 连接验证查询
+  validationQuery: "SELECT 1"
+
+  # 借出时是否验证连接
+  testOnBorrow: true
+
+  # 空闲时是否验证连接
+  testWhileIdle: true
+
+# ==================== 密码管理示例 ====================
+# dmcli 支持多种密码来源，避免明文存储密码
+#
+# 1. 环境变量（推荐用于 CI/CD）
+#    password:
+#      source: env
+#      key: DM_PASSWORD
+#
+# 2. 文件（推荐用于服务器部署）
+#    password:
+#      source: file
+#      path: /etc/dmcli/password.txt
+#
+# 3. 系统密钥环（推荐用于本地开发）
+#    password:
+#      source: keyring
+#      alias: dmcli-prod
+#
+# 4. 1Password（推荐用于团队协作）
+#    password:
+#      source: 1password
+#      vault: Development
+#      item: DM Production
+#      field: password
+#
+# 5. HashiCorp Vault（推荐用于企业环境）
+#    password:
+#      source: vault
+#      mount: secret
+#      path: dm/production
+#
+# 6. 明文字符串（仅用于开发测试，不推荐）
+#    password: "your_password"
+
+# ==================== 环境变量覆盖 ====================
+# 以下环境变量可覆盖配置文件中的值：
+#
+# DM_HOST              - 覆盖 defaults.host
+# DM_PORT              - 覆盖 defaults.port
+# DM_USER              - 覆盖 defaults.user
+# DM_PASSWORD          - 覆盖 defaults.password
+# DM_DATABASE          - 覆盖 defaults.database
+# DM_SCHEMA            - 覆盖 defaults.schema
+# DM_CHARSET           - 覆盖 defaults.charset
+# DM_COMPATIBLE_MODE   - 覆盖 defaults.compatibleMode
+# DM_CONNECT_TIMEOUT   - 覆盖 defaults.connectTimeout
+# DM_QUERY_TIMEOUT     - 覆盖 defaults.queryTimeout
+# DM_DEFAULT_CONNECTION - 覆盖 cli.defaultConnection
+# DM_OUTPUT_FORMAT     - 覆盖 cli.outputFormat
+# DM_MAX_ROWS          - 覆盖 cli.maxRows
+# DMCLI_CONFIG         - 指定配置文件路径
+
+# ==================== 配置文件搜索顺序 ====================
+# dmcli 使用 cosmiconfig 按以下顺序搜索配置：
+#
+# 1. package.json 中的 dmcli 字段
+# 2. .dmclirc
+# 3. .dmclirc.json
+# 4. .dmclirc.yaml
+# 5. .dmclirc.yml
+# 6. .dmclirc.js
+# 7. .dmclirc.ts
+# 8. .dmclirc.cjs
+# 9. dmcli.config.js
+# 10. dmcli.config.ts
+# 11. dmcli.config.cjs
+# 12. .config/dmclirc
+# 13. .config/dmclirc.json
+# 14. .config/dmclirc.yaml
+# 15. .config/dmclirc.yml
+#
+# 用户级配置（优先级较低）：
+# - Windows: %APPDATA%\dmcli\config.yaml
+# - Linux/macOS: ~/.config/dmcli/config.yaml
+#
+# 优先级（从低到高）：
+# 1. 默认配置
+# 2. 用户级配置
+# 3. 项目级配置
+# 4. 环境变量
+# 5. 命令行参数

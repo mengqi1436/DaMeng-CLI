@@ -1,21 +1,401 @@
-# 达梦数据库 CLI 工具集
+# dmcli - 达梦数据库命令行工具
 
-[English](README.md) | [中文](README_CN.md)
+[![npm version](https://img.shields.io/npm/v/dmcli.svg)](https://www.npmjs.com/package/dmcli)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-## 项目简介
+dmcli 是一个功能强大的达梦数据库命令行工具，支持多连接管理、连接池、模板继承等高级特性，帮助开发者更高效地与达梦数据库交互。
 
-本项目提供达梦数据库（Dameng Database）的命令行工具、开发文档和代码示例，帮助开发者快速上手达梦数据库开发。
+## 功能特性
 
-## 主要内容
+- 多连接管理：支持配置和快速切换多个数据库连接
+- 连接分组：按环境（开发、测试、生产）组织连接
+- 模板继承：通过模板减少重复配置
+- 密码安全：支持环境变量、文件、密钥环、1Password、Vault 等多种密码来源
+- 连接池：内置连接池管理，优化连接性能
+- 多种输出格式：支持 table、JSON、CSV、TSV 输出
+- 交互式 Shell：提供交互式 SQL 执行环境
+- 跨平台：支持 Windows、Linux、macOS
 
-### 📚 技术文档
+## 安装
 
-- **[达梦数据库技术文档.md](达梦数据库技术文档.md)** - 完整技术文档，包含连接方式、API、兼容性等
-- **[达梦数据库API参考.md](达梦数据库API参考.md)** - API 快速参考手册
-- **[SQL语法兼容性对比](docs/sql_compatibility.md)** - 与 Oracle、MySQL、PostgreSQL 的兼容性对比
-- **[连接字符串配置](config/connection_strings.md)** - 各语言连接字符串配置示例
+### 前置条件
 
-### 💻 代码示例
+- Node.js >= 18.0.0
+- 达梦数据库客户端驱动
+
+### npm 全局安装
+
+```bash
+npm install -g dmcli
+```
+
+### 从源码安装
+
+```bash
+git clone https://github.com/yourusername/dmcli.git
+cd dmcli
+npm install
+npm run build
+npm link
+```
+
+## 快速开始
+
+### 1. 初始化配置
+
+创建配置文件 `.dmclirc.yaml`：
+
+```bash
+dm config init
+```
+
+或手动创建配置文件，参考 [config/examples/config.example.yaml](config/examples/config.example.yaml)。
+
+### 2. 添加连接
+
+```bash
+# 添加本地开发连接
+dm connection add local --host localhost --port 5236 --user SYSDBA --password SYSDBA
+
+# 添加测试环境连接
+dm connection add test --host 192.168.1.100 --port 5236 --user test_user --database TEST_DB
+```
+
+### 3. 列出连接
+
+```bash
+dm connection list
+```
+
+### 4. 连接数据库
+
+```bash
+# 使用指定连接
+dm connect local
+
+# 使用默认连接
+dm connect
+```
+
+### 5. 执行查询
+
+```bash
+# 执行 SQL 查询
+dm query "SELECT * FROM SYSDBA.TEST_TABLE LIMIT 10"
+
+# 使用指定连接执行
+dm query --connection test "SELECT COUNT(*) FROM USERS"
+
+# 输出为 JSON 格式
+dm query --format json "SELECT * FROM USERS"
+```
+
+### 6. 进入交互式 Shell
+
+```bash
+dm shell
+```
+
+在交互式 Shell 中：
+
+```sql
+dm> SELECT * FROM TEST_TABLE;
+dm> USE other_database;
+dm> DESC test_table;
+dm> :edit  -- 打开外部编辑器
+dm> :history  -- 查看历史命令
+dm> exit  -- 退出
+```
+
+## 配置文件说明
+
+### 配置文件位置
+
+dmcli 使用 cosmiconfig 按以下顺序搜索配置：
+
+1. `package.json` 中的 `dmcli` 字段
+2. `.dmclirc` / `.dmclirc.json` / `.dmclirc.yaml` / `.dmclirc.yml`
+3. `.dmclirc.js` / `.dmclirc.ts` / `.dmclirc.cjs`
+4. `dmcli.config.js` / `dmcli.config.ts` / `dmcli.config.cjs`
+5. `.config/dmclirc` / `.config/dmclirc.json` / `.config/dmclirc.yaml` / `.config/dmclirc.yml`
+
+用户级配置：
+- Windows: `%APPDATA%\dmcli\config.yaml`
+- Linux/macOS: `~/.config/dmcli/config.yaml`
+
+### 配置优先级（从低到高）
+
+1. 默认配置
+2. 用户级配置
+3. 项目级配置
+4. 环境变量
+5. 命令行参数
+
+### 配置示例
+
+```yaml
+# 全局默认值
+defaults:
+  host: localhost
+  port: 5236
+  user: SYSDBA
+  charset: UTF-8
+  compatibleMode: dm  # dm | oracle | mysql
+
+# 连接配置
+connections:
+  local:
+    host: localhost
+    port: 5236
+    user: SYSDBA
+    password: "SYSDBA"
+    database: DAMENG
+
+  test:
+    host: 192.168.1.100
+    port: 5236
+    user: test_user
+    password:
+      source: env
+      key: DM_TEST_PASSWORD
+    database: TEST_DB
+
+# 连接分组
+groups:
+  development:
+    - local
+  production:
+    - prod-primary
+    - prod-replica
+
+# 连接模板
+templates:
+  base:
+    charset: UTF-8
+    connectTimeout: 30000
+
+# 使用模板的扩展连接
+extendedConnections:
+  dev-local:
+    extends: base
+    host: localhost
+    port: 5236
+    user: SYSDBA
+    password: "SYSDBA"
+
+# CLI 行为配置
+cli:
+  defaultConnection: local
+  outputFormat: table
+  maxRows: 1000
+  showTiming: true
+  confirmDangerous: true
+
+# 连接池配置
+pool:
+  maxSize: 10
+  minIdle: 2
+  acquireTimeout: 30000
+  idleTimeout: 600000
+  maxLifetime: 1800000
+```
+
+完整的配置示例请参考 [config/examples/config.example.yaml](config/examples/config.example.yaml)。
+
+## 命令使用说明
+
+### 连接管理
+
+```bash
+# 列出所有连接
+dm connection list
+
+# 添加连接
+dm connection add <name> --host <host> --port <port> --user <user> [--password <password>]
+
+# 删除连接
+dm connection remove <name>
+
+# 查看连接详情
+dm connection show <name>
+
+# 测试连接
+dm connection test <name>
+```
+
+### 分组管理
+
+```bash
+# 列出所有分组
+dm group list
+
+# 创建分组
+dm group create <name> --connections <conn1>,<conn2>
+
+# 删除分组
+dm group remove <name>
+
+# 查看分组详情
+dm group show <name>
+```
+
+### 查询执行
+
+```bash
+# 执行 SQL 查询
+dm query <sql>
+
+# 使用指定连接
+dm query --connection <name> <sql>
+
+# 指定输出格式
+dm query --format <table|json|csv|tsv> <sql>
+
+# 限制返回行数
+dm query --limit <rows> <sql>
+```
+
+### 数据导出
+
+```bash
+# 导出查询结果到文件
+dm export <sql> --output <file> --format <csv|json>
+
+# 使用指定连接
+dm export --connection <name> <sql> --output <file>
+```
+
+### 交互式 Shell
+
+```bash
+# 进入 Shell
+dm shell
+
+# 使用指定连接
+dm shell --connection <name>
+```
+
+Shell 内置命令：
+
+| 命令 | 说明 |
+|------|------|
+| `:help` | 显示帮助信息 |
+| `:tables` | 列出所有表 |
+| `:desc <table>` | 查看表结构 |
+| `:databases` | 列出所有数据库 |
+| `:use <database>` | 切换数据库 |
+| `:edit` | 打开外部编辑器 |
+| `:history` | 查看命令历史 |
+| `:clear` | 清屏 |
+| `:format <format>` | 切换输出格式 |
+| `:timing <on\|off>` | 开关执行时间显示 |
+| `exit` / `quit` | 退出 Shell |
+
+### 配置管理
+
+```bash
+# 查看当前配置
+dm config show
+
+# 初始化配置文件
+dm config init
+
+# 编辑配置文件
+dm config edit
+
+# 获取配置项值
+dm config get <key>
+
+# 设置配置项值
+dm config set <key> <value>
+```
+
+### 密码管理
+
+dmcli 支持多种密码来源，避免明文存储密码：
+
+```yaml
+# 环境变量
+password:
+  source: env
+  key: DM_PASSWORD
+
+# 文件
+password:
+  source: file
+  path: /etc/dmcli/password.txt
+
+# 系统密钥环
+password:
+  source: keyring
+  alias: dmcli-prod
+
+# 1Password
+password:
+  source: 1password
+  vault: Development
+  item: DM Production
+  field: password
+
+# HashiCorp Vault
+password:
+  source: vault
+  mount: secret
+  path: dm/production
+```
+
+## 环境变量
+
+以下环境变量可覆盖配置文件中的值：
+
+| 环境变量 | 说明 |
+|---------|------|
+| `DM_HOST` | 数据库主机地址 |
+| `DM_PORT` | 数据库端口 |
+| `DM_USER` | 数据库用户名 |
+| `DM_PASSWORD` | 数据库密码 |
+| `DM_DATABASE` | 数据库名称 |
+| `DM_SCHEMA` | 默认 Schema |
+| `DM_CHARSET` | 字符集 |
+| `DM_COMPATIBLE_MODE` | 兼容模式 |
+| `DM_CONNECT_TIMEOUT` | 连接超时（毫秒） |
+| `DM_QUERY_TIMEOUT` | 查询超时（毫秒） |
+| `DM_DEFAULT_CONNECTION` | 默认连接名称 |
+| `DM_OUTPUT_FORMAT` | 默认输出格式 |
+| `DM_MAX_ROWS` | 最大显示行数 |
+| `DMCLI_CONFIG` | 配置文件路径 |
+
+## 示例代码
+
+### 使用 API
+
+```typescript
+import { createConfigManager } from 'dmcli';
+import { ConnectionManager } from 'dmcli';
+
+// 加载配置
+const configManager = createConfigManager();
+await configManager.load();
+
+// 获取连接配置
+const connection = configManager.getConnection('local');
+
+// 创建连接管理器
+const connectionManager = new ConnectionManager();
+
+// 连接数据库
+const conn = await connectionManager.connect(connection);
+
+// 执行查询
+const result = await conn.query('SELECT * FROM USERS');
+
+console.log(result.rows);
+
+// 断开连接
+await connectionManager.disconnect(conn);
+```
+
+### 各语言连接示例
 
 | 语言 | 文件 | 说明 |
 |------|------|------|
@@ -26,208 +406,133 @@
 | Node.js | [examples/nodejs/dm_connection_example.js](examples/nodejs/dm_connection_example.js) | Node.js 连接示例 |
 | C/C++ | [examples/c/dm_odbc_example.c](examples/c/dm_odbc_example.c) | ODBC 连接示例 |
 
-## 快速开始
+## 开发指南
 
-### 1. 安装达梦数据库
-
-从达梦官网下载并安装数据库:
-- 官网: https://www.dameng.com
-- 下载中心: https://www.dameng.com/download/index.html
-
-### 2. 配置环境变量
+### 开发环境设置
 
 ```bash
-# Linux
-export DM_HOME=/opt/dmdbms
-export PATH=$PATH:$DM_HOME/bin
+# 克隆仓库
+git clone https://github.com/yourusername/dmcli.git
+cd dmcli
 
-# Windows
-set DM_HOME=C:\dmdbms
-set PATH=%PATH%;%DM_HOME%\bin
+# 安装依赖
+npm install
+
+# 构建项目
+npm run build
+
+# 开发模式（监听文件变化）
+npm run build:watch
+
+# 运行测试
+npm test
+
+# 监听模式运行测试
+npm run test:watch
+
+# 代码检查
+npm run lint
+
+# 自动修复代码风格
+npm run lint:fix
+
+# 类型检查
+npm run typecheck
+
+# 代码格式化
+npm run format
 ```
 
-### 3. 启动数据库服务
+### 项目结构
 
-```bash
-# Linux
-systemctl start DmServiceDMSERVER
-
-# Windows
-net start DmServiceDMSERVER
+```
+dmcli/
+├── src/                    # 源代码目录
+│   ├── cli.ts             # CLI 入口
+│   ├── commands/          # 命令实现
+│   │   ├── config.ts      # 配置管理命令
+│   │   ├── connect.ts     # 连接命令
+│   │   ├── connection.ts  # 连接管理命令
+│   │   ├── exec.ts        # 执行命令
+│   │   ├── export.ts      # 导出命令
+│   │   └── query.ts       # 查询命令
+│   ├── interactive/       # 交互式 Shell
+│   │   └── shell.ts
+│   ├── lib/               # 核心库
+│   │   ├── config-manager.ts    # 配置管理器
+│   │   ├── connection-manager.ts # 连接管理器
+│   │   ├── formatter.ts         # 输出格式化
+│   │   └── secret-resolver.ts   # 密码解析器
+│   ├── types/             # 类型定义
+│   │   └── index.ts
+│   └── utils/             # 工具函数
+│       ├── error.ts
+│       ├── logger.ts
+│       └── platform.ts
+├── config/                # 配置示例
+│   └── examples/
+│       └── config.example.yaml
+├── examples/              # 代码示例
+├── docs/                  # 文档
+├── dist/                  # 构建输出
+├── package.json
+├── tsconfig.json
+├── esbuild.config.mjs
+└── README.md
 ```
 
-### 4. 测试连接
+### 贡献指南
 
-```bash
-# 使用 disql 命令行工具
-disql SYSDBA/SYSDBA@localhost:5236
-```
+欢迎提交 Issue 和 Pull Request！
 
-### 5. 运行示例代码
+1. Fork 本仓库
+2. 创建特性分支：`git checkout -b feature/amazing-feature`
+3. 提交更改：`git commit -m 'feat: 添加某功能'`
+4. 推送分支：`git push origin feature/amazing-feature`
+5. 提交 Pull Request
 
-选择对应语言的示例代码，修改连接参数后运行:
+### 提交规范
 
-```bash
-# Java 示例
-javac -cp .:DmJdbcDriver18.jar examples/java/DMConnectionExample.java
-java -cp .:DmJdbcDriver18.jar DMConnectionExample
+使用 [Conventional Commits](https://www.conventionalcommits.org/) 规范：
 
-# Python 示例
-python examples/python/dm_connection_example.py
-
-# Go 示例
-cd examples/go
-go run dm_connection_example.go
-
-# .NET 示例
-cd examples/dotnet
-dotnet run
-
-# Node.js 示例
-cd examples/nodejs
-npm install dmdb
-node dm_connection_example.js
-```
-
-## 连接字符串格式
-
-### JDBC
-```
-jdbc:dm://localhost:5236
-jdbc:dm://192.168.1.100:5236/DAMENG
-```
-
-### Python dmPython
-```python
-dmPython.connect(user='SYSDBA', password='SYSDBA', server='localhost', port=5236)
-```
-
-### Go
-```
-dm://SYSDBA:SYSDBA@localhost:5236/SYSDBA
-```
-
-### .NET
-```
-Server=localhost;Port=5236;User Id=SYSDBA;Password=SYSDBA;
-```
-
-### Node.js
-```javascript
-{ connectString: 'localhost:5236', user: 'SYSDBA', password: 'SYSDBA' }
-```
-
-## 默认配置
-
-| 配置项 | 值 |
-|--------|-----|
-| 默认端口 | 5236 |
-| 默认管理员 | SYSDBA |
-| 默认密码 | SYSDBA |
-| 驱动类名 | dm.jdbc.driver.DmDriver |
-
-## 各语言驱动
-
-| 语言 | 驱动/包名 | 安装方式 |
-|------|----------|---------|
-| Java | com.dameng:DmJdbcDriver18 | Maven |
-| Python | dmPython | 源码编译 |
-| Go | gitee.com/chunanyong/dm | go get |
-| .NET | DmProvider | NuGet |
-| Node.js | dmdb | npm |
-| C/C++ | ODBC 驱动 | 系统安装 |
-
-## SQL 兼容性
-
-达梦数据库支持多种兼容模式:
-
-| 兼容模式 | 参数值 | 说明 |
-|---------|--------|------|
-| DM 默认模式 | 0 | 达梦原生语法 |
-| Oracle 兼容模式 | 1/2 | 兼容 Oracle SQL 语法 |
-| MySQL 兼容模式 | 3 | 兼容 MySQL SQL 语法 |
-
-配置方式:
-```ini
-# dm.ini
-COMPATIBLE_MODE = 2  # Oracle 兼容模式
-```
-
-## 命令行工具 (disql)
-
-### 基本连接
-```bash
-disql SYSDBA/SYSDBA@localhost:5236
-```
-
-### 常用命令
-```sql
-DESC table_name;           -- 查看表结构
-SET LINESIZE 200;          -- 设置行宽
-SET PAGESIZE 100;          -- 设置每页行数
-SPOOL file.txt;            -- 输出到文件
-@script.sql;               -- 执行脚本
-EXIT;                      -- 退出
-```
+- `feat:` 新功能
+- `fix:` 修复 Bug
+- `docs:` 文档更新
+- `style:` 代码格式（不影响功能）
+- `refactor:` 重构
+- `perf:` 性能优化
+- `test:` 测试相关
+- `chore:` 构建/工具相关
 
 ## 常见问题
 
-### 1. 连接失败
+### 连接失败
 
-- 检查数据库服务是否启动
-- 确认端口号是否正确 (默认 5236)
-- 检查防火墙设置
-- 验证用户名和密码
+1. 检查数据库服务是否启动
+2. 确认端口号是否正确（默认 5236）
+3. 检查防火墙设置
+4. 验证用户名和密码
 
-### 2. 中文乱码
+### 中文乱码
 
-- JDBC 连接添加参数: `?charset=UTF-8`
-- 设置客户端字符集与数据库一致
+- 确保配置文件中的 charset 与数据库一致
+- JDBC 连接添加参数：`?charset=UTF-8`
 
-### 3. 驱动找不到
+### 驱动问题
 
-- 确保驱动在 classpath 中
+- 确保已安装达梦数据库客户端驱动
 - 检查驱动版本与数据库版本匹配
 
-## 官方资源
+## 相关资源
 
-- **达梦官网**: https://www.dameng.com
-- **技术文档中心**: https://eco.dameng.com/document/
-- **技术社区**: https://eco.dameng.com/community/
-- **在线体验**: https://eco.dameng.com/tour/
-- **技术支持**: dmtech@dameng.com
-
-## 项目结构
-
-```
-D:\MCP\DaMeng-CLI\
-├── README.md                          # 项目说明
-├── 达梦数据库技术文档.md                # 完整技术文档
-├── 达梦数据库API参考.md                 # API 快速参考
-├── docs/                              # 文档目录
-│   ├── sql_compatibility.md           # SQL 兼容性对比
-│   └── project_structure.md           # 项目结构说明
-├── config/                            # 配置示例
-│   └── connection_strings.md          # 连接字符串配置
-└── examples/                          # 代码示例
-    ├── java/                          # Java 示例
-    ├── python/                        # Python 示例
-    ├── go/                            # Go 示例
-    ├── dotnet/                        # .NET 示例
-    ├── nodejs/                        # Node.js 示例
-    └── c/                             # C/C++ 示例
-```
+- 达梦官网：https://www.dameng.com
+- 技术文档中心：https://eco.dameng.com/document/
+- 技术社区：https://eco.dameng.com/community/
 
 ## 许可证
 
-本项目采用 MIT 许可证。
-
-## 贡献指南
-
-欢迎提交 Issue 和 Pull Request 来改进本项目。
+本项目采用 MIT 许可证 - 详见 [LICENSE](LICENSE) 文件。
 
 ---
 
-**更新日期**: 2026年6月15日
-
-**注意**: 本文档基于达梦数据库 DM8 版本整理，具体使用时请参考对应版本的官方文档。
+**更新日期**：2026年6月15日
