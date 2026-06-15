@@ -55,13 +55,30 @@ import { execCommand } from './commands/exec';
 import { exportCommand } from './commands/export';
 import { connectionCommand } from './commands/connection';
 import { configCommand } from './commands/config';
+import { schemaCommand } from './commands/schema';
+import { tableCommand } from './commands/table';
+import { userCommand } from './commands/user';
+import { dataCommand } from './commands/data';
+import { performanceCommand } from './commands/performance';
+import { maintenanceCommand } from './commands/maintenance';
+import { shellCommand } from './commands/shell';
 
+// 基础命令
 program.addCommand(connectCommand(configManager, connectionManager));
 program.addCommand(queryCommand(configManager, connectionManager));
 program.addCommand(execCommand(configManager, connectionManager));
 program.addCommand(exportCommand(configManager, connectionManager));
 program.addCommand(connectionCommand(configManager));
 program.addCommand(configCommand(configManager));
+
+// 新增管理命令
+program.addCommand(schemaCommand(configManager, connectionManager));
+program.addCommand(tableCommand(configManager, connectionManager));
+program.addCommand(userCommand(configManager, connectionManager));
+program.addCommand(dataCommand(configManager, connectionManager));
+program.addCommand(performanceCommand(configManager, connectionManager));
+program.addCommand(maintenanceCommand(configManager, connectionManager));
+program.addCommand(shellCommand(configManager, connectionManager));
 
 // 使用 parseAsync 支持异步 action（Commander.js 最佳实践）
 program.parseAsync(process.argv).catch(async (error) => {
