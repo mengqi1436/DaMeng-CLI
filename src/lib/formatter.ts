@@ -240,3 +240,31 @@ export function formatQueryResult(
   const formatter = createFormatter(options);
   return formatter.format(result);
 }
+
+/**
+ * 执行 SQL 查询并显示结果
+ *
+ * @param connectionManager - 连接管理器实例
+ * @param sql - SQL 查询语句
+ * @param format - 输出格式（可选，默认为 'table'）
+ */
+export async function executeAndDisplay(
+  connectionManager: { query: (sql: string) => Promise<any> },
+  sql: string,
+  format?: OutputFormat
+): Promise<void> {
+  const result = await connectionManager.query(sql);
+
+  if (result.rows && result.rows.length > 0) {
+    const columns =
+      result.metaData?.map((m: any) => m.name) ||
+      Object.keys(result.rows[0]);
+
+    const formatter = createFormatter({ format: format || 'table' });
+    const output = formatter.format({ columns, rows: result.rows });
+    console.log(output);
+    console.log(chalk.gray(`\n共 ${result.rows.length} 行`));
+  } else {
+    console.log(chalk.yellow('查询返回 0 行'));
+  }
+}

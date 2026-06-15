@@ -51,3 +51,6 @@ target/
 *.crt
 *.p12
 *.jks
+
+# 编辑器配置
+.arts/
