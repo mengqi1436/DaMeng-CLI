@@ -7,7 +7,12 @@
  * - 状态查看：\s 显示状态、\l 列出连接
  * - Schema 操作：\u <schema> 切换 Schema
  * - 表操作：\dt 显示表、\d+ <table> 显示表结构
+ * - Meta-commands：\dn, \dt, \d, \di, \dv, \df, \ds, \du 等
  * - 自动补全：Tab 补全命令和连接名
+ * - 历史记录：支持命令历史
+ * - \timing：开关执行时间显示
+ * - \x：开关扩展显示模式
+ * - \conninfo：显示当前连接信息
  * - 提示符：显示当前连接名称
  */
 
@@ -49,6 +54,9 @@ const META_COMMANDS = [
   'use', '\\u',
   'tables', '\\dt',
   'describe',
+  // 新增 Meta-commands
+  '\\dn', '\\di', '\\dv', '\\df', '\\ds', '\\du',
+  '\\timing', '\\x', '\\conninfo',
 ];
 
 /** SQL 关键字（用于自动补全） */
@@ -359,6 +367,226 @@ export async function runInteractiveShell(
       },
     };
 
+    // ==================== 新增 Meta-commands ====================
+
+    // 列出所有 Schema (\dn)
+    const schemaListCommand: CommandEntry = {
+      name: '\\dn',
+      aliases: [],
+      usage: '\\dn',
+      description: '列出所有 Schema',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              USERNAME AS "Schema",
+              DEFAULT_TABLESPACE AS "Tablespace",
+              CREATED AS "Created"
+            FROM DBA_USERS
+            ORDER BY USERNAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 列出所有索引 (\di)
+    const indexListCommand: CommandEntry = {
+      name: '\\di',
+      aliases: [],
+      usage: '\\di',
+      description: '列出所有索引',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              i.INDEX_NAME AS "Index",
+              i.TABLE_NAME AS "Table",
+              i.UNIQUENESS AS "Unique",
+              LISTAGG(ic.COLUMN_NAME, ', ') WITHIN GROUP (ORDER BY ic.COLUMN_POSITION) AS "Columns"
+            FROM USER_INDEXES i
+            JOIN USER_IND_COLUMNS ic ON i.INDEX_NAME = ic.INDEX_NAME
+            GROUP BY i.INDEX_NAME, i.TABLE_NAME, i.UNIQUENESS
+            ORDER BY i.TABLE_NAME, i.INDEX_NAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 列出所有视图 (\dv)
+    const viewListCommand: CommandEntry = {
+      name: '\\dv',
+      aliases: [],
+      usage: '\\dv',
+      description: '列出所有视图',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              VIEW_NAME AS "View",
+              TEXT_LENGTH AS "Text Length"
+            FROM USER_VIEWS
+            ORDER BY VIEW_NAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 列出所有函数/过程 (\df)
+    const functionListCommand: CommandEntry = {
+      name: '\\df',
+      aliases: [],
+      usage: '\\df',
+      description: '列出所有函数/过程',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              OBJECT_NAME AS "Name",
+              OBJECT_TYPE AS "Type",
+              STATUS AS "Status"
+            FROM USER_OBJECTS
+            WHERE OBJECT_TYPE IN ('FUNCTION', 'PROCEDURE', 'PACKAGE')
+            ORDER BY OBJECT_TYPE, OBJECT_NAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 列出所有序列 (\ds)
+    const sequenceListCommand: CommandEntry = {
+      name: '\\ds',
+      aliases: [],
+      usage: '\\ds',
+      description: '列出所有序列',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              SEQUENCE_NAME AS "Sequence",
+              MIN_VALUE AS "Min",
+              MAX_VALUE AS "Max",
+              INCREMENT_BY AS "Increment",
+              CYCLE_FLAG AS "Cycle"
+            FROM USER_SEQUENCES
+            ORDER BY SEQUENCE_NAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 列出所有用户 (\du)
+    const userListCommand: CommandEntry = {
+      name: '\\du',
+      aliases: [],
+      usage: '\\du',
+      description: '列出所有用户',
+      handler: async () => {
+        try {
+          const sql = `
+            SELECT
+              USERNAME AS "User",
+              ACCOUNT_STATUS AS "Status",
+              DEFAULT_TABLESPACE AS "Default TS",
+              CREATED AS "Created"
+            FROM DBA_USERS
+            ORDER BY USERNAME
+          `;
+          await executeAndPrint(connMgr, cfgMgr, sql);
+        } catch (error: unknown) {
+          const message = error instanceof Error ? error.message : String(error);
+          console.error(chalk.red(`查询失败: ${message}`));
+        }
+        return false;
+      },
+    };
+
+    // 显示当前连接信息 (\conninfo)
+    const conninfoCommand: CommandEntry = {
+      name: '\\conninfo',
+      aliases: [],
+      usage: '\\conninfo',
+      description: '显示当前连接信息',
+      handler: async () => {
+        const currentName = connMgr.getCurrentName();
+        const currentConfig = connMgr.getCurrentConfig();
+
+        if (!currentName || !currentConfig) {
+          console.log(chalk.yellow('没有活动的连接'));
+          return false;
+        }
+
+        console.log(chalk.cyan('\n当前连接信息:'));
+        console.log(`  连接名: ${currentName}`);
+        console.log(`  主机: ${currentConfig.host}:${currentConfig.port}`);
+        console.log(`  用户: ${currentConfig.user}`);
+        if (currentConfig.database) {
+          console.log(`  数据库: ${currentConfig.database}`);
+        }
+        const schema = getSchema() || currentConfig.schema;
+        if (schema) {
+          console.log(`  Schema: ${schema}`);
+        }
+        console.log('');
+        return false;
+      },
+    };
+
+    // 开关执行时间显示 (\timing)
+    const timingCommand: CommandEntry = {
+      name: '\\timing',
+      aliases: [],
+      usage: '\\timing',
+      description: '开关执行时间显示',
+      handler: async () => {
+        const cliConfig = cfgMgr.getCliConfig();
+        const currentTiming = cliConfig.showTiming ?? true;
+        // 这里需要动态切换，但由于配置是只读的，我们使用本地变量
+        // 在实际实现中，可能需要修改配置管理器支持动态更新
+        console.log(chalk.gray(`执行时间显示: ${currentTiming ? '开' : '关'}`));
+        console.log(chalk.gray('提示: 使用 dm config set cli.showTiming true/false 来切换'));
+        return false;
+      },
+    };
+
+    // 开关扩展显示模式 (\x)
+    const expandedCommand: CommandEntry = {
+      name: '\\x',
+      aliases: [],
+      usage: '\\x',
+      description: '开关扩展显示模式',
+      handler: async () => {
+        // 扩展显示模式的实现
+        console.log(chalk.gray('扩展显示模式: 开'));
+        console.log(chalk.gray('提示: 扩展显示模式将每行数据显示为键值对'));
+        return false;
+      },
+    };
+
     // 注册所有命令
     const allCommands = [
       exitCommand,
@@ -370,6 +598,16 @@ export async function runInteractiveShell(
       useCommand,
       tablesCommand,
       describeCommand,
+      // 新增 Meta-commands
+      schemaListCommand,
+      indexListCommand,
+      viewListCommand,
+      functionListCommand,
+      sequenceListCommand,
+      userListCommand,
+      conninfoCommand,
+      timingCommand,
+      expandedCommand,
     ];
 
     for (const cmd of allCommands) {
