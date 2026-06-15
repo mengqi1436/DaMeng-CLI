@@ -5,7 +5,7 @@ import { ConfigManager } from '../lib/config-manager';
 import { ConnectionManager } from '../lib/connection-manager';
 
 export function maintenanceCommand(
-  configManager: ConfigManager,
+  _configManager: ConfigManager,
   connectionManager: ConnectionManager
 ): Command {
   const cmd = new Command('maintenance')

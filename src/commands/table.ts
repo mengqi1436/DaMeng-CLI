@@ -25,14 +25,14 @@ async function getCurrentSchema(connectionManager: ConnectionManager): Promise<s
   const result = await connectionManager.query(
     "SELECT SYS_CONTEXT('USERENV','CURRENT_SCHEMA') AS SCHEMA FROM DUAL"
   );
-  return result.rows[0]?.SCHEMA || 'SYSDBA';
+  return result.rows?.[0]?.SCHEMA || 'SYSDBA';
 }
 
 /**
  * 创建表管理命令
  */
 export function tableCommand(
-  configManager: ConfigManager,
+  _configManager: ConfigManager,
   connectionManager: ConnectionManager
 ): Command {
   const cmd = new Command('table').description('表管理');

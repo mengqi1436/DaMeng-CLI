@@ -11,7 +11,7 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import ora, { oraPromise } from 'ora';
+import { oraPromise } from 'ora';
 import type { ConfigManager } from '../lib/config-manager';
 import type { ConnectionManager } from '../lib/connection-manager';
 

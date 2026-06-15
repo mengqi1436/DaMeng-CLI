@@ -43,7 +43,7 @@ program
   .option('--max-rows <n>', '最大显示行数', parseMaxRows, 1000)
   .option('--verbose', '详细输出', false)
   .option('--no-color', '禁用颜色输出')
-  .hook('preAction', async (thisCommand) => {
+  .hook('preAction', async (_thisCommand) => {
     // 在执行任何命令前加载配置
     await configManager.load();
   });
@@ -68,7 +68,7 @@ program.addCommand(connectCommand(configManager, connectionManager));
 program.addCommand(queryCommand(configManager, connectionManager));
 program.addCommand(execCommand(configManager, connectionManager));
 program.addCommand(exportCommand(configManager, connectionManager));
-program.addCommand(connectionCommand(configManager));
+program.addCommand(connectionCommand(configManager, connectionManager));
 program.addCommand(configCommand(configManager));
 
 // 新增管理命令

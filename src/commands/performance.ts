@@ -5,7 +5,7 @@ import { ConfigManager } from '../lib/config-manager';
 import { ConnectionManager } from '../lib/connection-manager';
 
 export function performanceCommand(
-  configManager: ConfigManager,
+  _configManager: ConfigManager,
   connectionManager: ConnectionManager
 ): Command {
   const cmd = new Command('performance')
@@ -17,7 +17,7 @@ export function performanceCommand(
     .command('explain <sql>')
     .description('显示执行计划')
     .option('-f, --format <format>', '输出格式 (text|json)', 'text')
-    .action(async (sql, options) => {
+    .action(async (sql, _options) => {
       const spinner = ora('分析执行计划...').start();
       try {
         await connectionManager.execute(`EXPLAIN PLAN FOR ${sql}`);

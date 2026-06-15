@@ -133,7 +133,7 @@ export class Formatter {
    * 格式化为 CSV
    */
   toCsv(columns: string[], rows: Record<string, any>[]): string {
-    const { csvDelimiter, showHeaders, nullText } = this.options;
+    const { csvDelimiter, showHeaders } = this.options;
     const lines: string[] = [];
 
     // 添加表头
@@ -161,7 +161,7 @@ export class Formatter {
    * 格式化为 TSV
    */
   toTsv(columns: string[], rows: Record<string, any>[]): string {
-    const { tsvDelimiter, showHeaders, nullText } = this.options;
+    const { tsvDelimiter, showHeaders } = this.options;
     const lines: string[] = [];
 
     // 添加表头

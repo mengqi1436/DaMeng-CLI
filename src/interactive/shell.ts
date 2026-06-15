@@ -798,7 +798,7 @@ export async function runInteractiveShell(
  */
 function createCompleter(
   line: string,
-  connectionManager: ConnectionManager,
+  _connectionManager: ConnectionManager,
   configManager: ConfigManager
 ): [string[], string] {
   const trimmed = line.trimStart();

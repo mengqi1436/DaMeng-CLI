@@ -215,13 +215,6 @@ export class ConnectionManager {
     return statuses;
   }
 
-  /**
-   * 获取指定连接的条目（内部使用）
-   */
-  private getEntry(name: string): ConnectionEntry | undefined {
-    return this.connections.get(name);
-  }
-
   // ==================== 查询与执行 ====================
 
   /**
@@ -237,7 +230,7 @@ export class ConnectionManager {
       throw new Error('没有活动的连接，请先连接数据库');
     }
 
-    return conn.execute(sql, params, {
+    return conn.execute(sql, params || [], {
       outFormat: dmdb.OUT_FORMAT_OBJECT,
     });
   }
@@ -257,7 +250,7 @@ export class ConnectionManager {
       throw new Error('没有活动的连接，请先连接数据库');
     }
 
-    return conn.execute(sql, params, {
+    return conn.execute(sql, params || [], {
       autoCommit: true,
     });
   }

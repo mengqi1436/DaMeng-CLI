@@ -21,7 +21,7 @@ import { executeAndDisplay } from '../lib/formatter';
  * 创建 Schema 管理命令
  */
 export function schemaCommand(
-  configManager: ConfigManager,
+  _configManager: ConfigManager,
   connectionManager: ConnectionManager
 ): Command {
   const cmd = new Command('schema').description('Schema 管理');

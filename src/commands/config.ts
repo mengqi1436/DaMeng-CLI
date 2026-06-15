@@ -11,11 +11,9 @@
 
 import { Command } from 'commander';
 import chalk from 'chalk';
-import Table from 'cli-table3';
 import fs from 'fs';
 import yaml from 'js-yaml';
 import { ConfigManager } from '../lib/config-manager';
-import type { DmcliConfig } from '../types';
 
 /**
  * 支持通过点号路径设置的配置键映射表
@@ -287,7 +285,6 @@ function resolveConfigKey(key: string): string | null {
     charset: 'defaults.charset',
     default: 'cli.defaultConnection',
     format: 'cli.outputFormat',
-    'max-rows': 'cli.maxRows',
     'max-rows': 'cli.maxRows',
     timing: 'cli.showTiming',
     confirm: 'cli.confirmDangerous',
