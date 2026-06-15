@@ -1,0 +1,9 @@
+# 忽略所有文件
+**
+
+# 允许发布的文件
+!dist/
+!README.md
+!LICENSE
+!CHANGELOG.md
+!package.json

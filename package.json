@@ -1,0 +1,81 @@
+{
+  "name": "dmcli",
+  "version": "1.0.0",
+  "description": "达梦数据库命令行工具 - 支持多连接管理",
+  "main": "dist/api.js",
+  "types": "dist/api.d.ts",
+  "bin": {
+    "dm": "dist/cli.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
+  "scripts": {
+    "build": "node esbuild.config.mjs",
+    "build:watch": "node esbuild.config.mjs --watch",
+    "dev": "tsx src/cli.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts",
+    "lint:fix": "eslint src/ --ext .ts --fix",
+    "typecheck": "tsc --noEmit",
+    "format": "prettier --write \"src/**/*.ts\"",
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
+    "prepare": "husky install"
+  },
+  "keywords": [
+    "dameng",
+    "database",
+    "cli",
+    "sql",
+    "dm8",
+    "dmcli",
+    "command-line"
+  ],
+  "author": "Your Name <your.email@example.com>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yourusername/dmcli.git"
+  },
+  "bugs": {
+    "url": "https://github.com/yourusername/dmcli/issues"
+  },
+  "homepage": "https://github.com/yourusername/dmcli#readme",
+  "dependencies": {
+    "commander": "^12.0.0",
+    "chalk": "^5.3.0",
+    "ora": "^8.0.0",
+    "cli-table3": "^0.6.3",
+    "cosmiconfig": "^9.0.0",
+    "js-yaml": "^4.1.0",
+    "dmdb": "^1.0.0",
+    "@inquirer/prompts": "^5.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.0",
+    "@types/node": "^20.0.0",
+    "@types/js-yaml": "^4.0.0",
+    "esbuild": "^0.21.0",
+    "tsx": "^4.0.0",
+    "vitest": "^1.0.0",
+    "@vitest/coverage-v8": "^1.0.0",
+    "eslint": "^9.0.0",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^7.0.0",
+    "prettier": "^3.0.0",
+    "husky": "^9.0.0",
+    "lint-staged": "^15.0.0"
+  }
+}
