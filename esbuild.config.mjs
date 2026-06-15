@@ -13,7 +13,7 @@ const buildOptions = {
   minify: !isWatch,
   treeShaking: true,
   banner: {
-    js: '#!/usr/bin/env node\n',
+    js: '',
   },
   external: [
     'dmdb',

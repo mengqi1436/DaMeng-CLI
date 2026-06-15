@@ -50,8 +50,18 @@ program
 
 // 注册子命令
 import { connectCommand } from './commands/connect';
+import { queryCommand } from './commands/query';
+import { execCommand } from './commands/exec';
+import { exportCommand } from './commands/export';
+import { connectionCommand } from './commands/connection';
+import { configCommand } from './commands/config';
 
 program.addCommand(connectCommand(configManager, connectionManager));
+program.addCommand(queryCommand(configManager, connectionManager));
+program.addCommand(execCommand(configManager, connectionManager));
+program.addCommand(exportCommand(configManager, connectionManager));
+program.addCommand(connectionCommand(configManager));
+program.addCommand(configCommand(configManager));
 
 // 使用 parseAsync 支持异步 action（Commander.js 最佳实践）
 program.parseAsync(process.argv).catch(async (error) => {

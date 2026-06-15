@@ -31,8 +31,7 @@
     "lint:fix": "eslint src/ --ext .ts --fix",
     "typecheck": "tsc --noEmit",
     "format": "prettier --write \"src/**/*.ts\"",
-    "prepublishOnly": "npm run typecheck && npm run test && npm run build",
-    "prepare": "husky install"
+    "prepublishOnly": "npm run typecheck && npm run test && npm run build"
   },
   "keywords": [
     "dameng",
@@ -70,12 +69,6 @@
     "esbuild": "^0.21.0",
     "tsx": "^4.0.0",
     "vitest": "^1.0.0",
-    "@vitest/coverage-v8": "^1.0.0",
-    "eslint": "^9.0.0",
-    "@typescript-eslint/eslint-plugin": "^7.0.0",
-    "@typescript-eslint/parser": "^7.0.0",
-    "prettier": "^3.0.0",
-    "husky": "^9.0.0",
-    "lint-staged": "^15.0.0"
+    "prettier": "^3.0.0"
   }
 }
