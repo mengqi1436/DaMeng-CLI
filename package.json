@@ -42,16 +42,16 @@
     "dmcli",
     "command-line"
   ],
-  "author": "Your Name <your.email@example.com>",
+  "author": "mengqi1436 <1436554758@qq.com>",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/yourusername/dmcli.git"
+    "url": "https://github.com/mengqi1436/DaMeng-CLI.git"
   },
   "bugs": {
-    "url": "https://github.com/yourusername/dmcli/issues"
+    "url": "https://github.com/mengqi1436/DaMeng-CLI/issues"
   },
-  "homepage": "https://github.com/yourusername/dmcli#readme",
+  "homepage": "https://github.com/mengqi1436/DaMeng-CLI#readme",
   "dependencies": {
     "@inquirer/prompts": "^5.0.0",
     "chalk": "^5.3.0",
