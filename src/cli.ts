@@ -62,6 +62,7 @@ import { dataCommand } from './commands/data';
 import { performanceCommand } from './commands/performance';
 import { maintenanceCommand } from './commands/maintenance';
 import { shellCommand } from './commands/shell';
+import { migrateCommand } from './commands/migrate';
 
 // 基础命令
 program.addCommand(connectCommand(configManager, connectionManager));
@@ -79,6 +80,7 @@ program.addCommand(dataCommand(configManager, connectionManager));
 program.addCommand(performanceCommand(configManager, connectionManager));
 program.addCommand(maintenanceCommand(configManager, connectionManager));
 program.addCommand(shellCommand(configManager, connectionManager));
+program.addCommand(migrateCommand(configManager, connectionManager));
 
 // 使用 parseAsync 支持异步 action（Commander.js 最佳实践）
 program.parseAsync(process.argv).catch(async (error) => {

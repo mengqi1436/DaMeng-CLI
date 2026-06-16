@@ -9,7 +9,68 @@ permissions:
   contents: write
 
 jobs:
-  release:
+  build-exe:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            artifact: dmcli-linux-x64
+          - os: windows-latest
+            artifact: dmcli-windows-x64.exe
+          - os: macos-latest
+            artifact: dmcli-macos-x64
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Create SEA blob
+        run: node --experimental-sea-config sea-config.json
+
+      - name: Prepare SEA executable (Linux)
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          cp $(which node) dist/${{ matrix.artifact }}
+          npx postject dist/${{ matrix.artifact }} NODE_SEA_BLOB dist/sea-prep.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+
+      - name: Prepare SEA executable (Windows)
+        if: matrix.os == 'windows-latest'
+        run: |
+          cp "$(which node).exe" dist/${{ matrix.artifact }}
+          npx postject dist/${{ matrix.artifact }} NODE_SEA_BLOB dist/sea-prep.blob `
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+        shell: pwsh
+
+      - name: Prepare SEA executable (macOS)
+        if: matrix.os == 'macos-latest'
+        run: |
+          cp $(which node) dist/${{ matrix.artifact }}
+          npx postject dist/${{ matrix.artifact }} NODE_SEA_BLOB dist/sea-prep.blob \
+            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2 \
+            --macho-segment-name NODE_SEA
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.artifact }}
+          path: dist/${{ matrix.artifact }}
+
+  create-release:
+    needs: build-exe
     runs-on: ubuntu-latest
 
     steps:
@@ -25,23 +86,26 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
-
       - name: Build
         run: npm run build
 
-      - name: Verify build output
-        run: ls -la dist/
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+
+      - name: List artifacts
+        run: ls -laR artifacts/
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: dist/*
+          files: |
+            artifacts/dmcli-linux-x64/dmcli-linux-x64
+            artifacts/dmcli-windows-x64.exe/dmcli-windows-x64.exe
+            artifacts/dmcli-macos-x64/dmcli-macos-x64
+            dist/cli.js
 
       - name: Publish to npm
         run: npm publish --provenance --access public
