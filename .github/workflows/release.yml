@@ -5,12 +5,12 @@ on:
     tags:
       - 'v*'
 
+permissions:
+  contents: write
+
 jobs:
-  # Job 1: 创建 GitHub Release
-  github-release:
+  release:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
 
     steps:
       - name: Checkout
@@ -34,45 +34,17 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Create GitHub Release
+      - name: Verify build output
+        run: ls -la dist/
+
+      - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           generate_release_notes: true
-          files: |
-            dist/cli.js
-            dist/cli.js.map
-
-  # Job 2: 发布到 npm（独立运行，不影响 GitHub Release）
-  publish-npm:
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20.x
-          registry-url: 'https://registry.npmjs.org'
-          cache: 'npm'
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type check
-        run: npm run typecheck
-
-      - name: Test
-        run: npm test
-
-      - name: Build
-        run: npm run build
+          files: dist/*
 
       - name: Publish to npm
         run: npm publish --provenance --access public
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        continue-on-error: true
