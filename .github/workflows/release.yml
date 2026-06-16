@@ -50,9 +50,9 @@ jobs:
       - name: Prepare SEA executable (Windows)
         if: matrix.os == 'windows-latest'
         run: |
-          cp "$(which node).exe" dist/${{ matrix.artifact }}
-          npx postject dist/${{ matrix.artifact }} NODE_SEA_BLOB dist/sea-prep.blob `
-            --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
+          $nodePath = (Get-Command node).Source
+          Copy-Item $nodePath "dist\${{ matrix.artifact }}"
+          npx postject "dist\${{ matrix.artifact }}" NODE_SEA_BLOB dist\sea-prep.blob --sentinel-fuse NODE_SEA_FUSE_fce680ab2cc467b6e072b8b5df1996b2
         shell: pwsh
 
       - name: Prepare SEA executable (macOS)

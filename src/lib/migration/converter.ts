@@ -762,15 +762,16 @@ export class SqlConverter {
         stats.byCategory[rule.category] += matches.length;
 
         // 应用替换
-        if (typeof rule.replacement === 'function') {
+        const replacementFn = rule.replacement;
+        if (typeof replacementFn === 'function') {
           // 使用函数替换
           converted = converted.replace(rule.pattern, (...args) => {
             const match = args.slice(0, -2) as unknown as RegExpMatchArray;
-            return rule.replacement(match);
+            return replacementFn(match);
           });
         } else {
           // 使用字符串替换
-          converted = converted.replace(rule.pattern, rule.replacement);
+          converted = converted.replace(rule.pattern, replacementFn);
         }
 
         appliedRules.push(rule.id);

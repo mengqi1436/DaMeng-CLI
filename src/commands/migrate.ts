@@ -33,7 +33,7 @@ import {
  * 创建迁移命令
  */
 export function migrateCommand(
-  configManager: ConfigManager,
+  _configManager: ConfigManager,
   connectionManager: ConnectionManager
 ): Command {
   const cmd = new Command('migrate').alias('mig').description('数据库迁移');
@@ -85,14 +85,14 @@ export function migrateCommand(
           const columnsResult = await connectionManager.query(columnsSql);
 
           tables.push({
-            name: tableName,
+            name: tableName as string,
             schema,
             columns: (columnsResult.rows || []).map((col: Record<string, unknown>) => ({
-              name: col.COLUMN_NAME,
-              dataType: col.DATA_TYPE,
+              name: col.COLUMN_NAME as string,
+              dataType: col.DATA_TYPE as string,
               typeParams: col.DATA_LENGTH ? String(col.DATA_LENGTH) : undefined,
               nullable: col.NULLABLE === 'Y',
-              defaultValue: col.DATA_DEFAULT || undefined,
+              defaultValue: col.DATA_DEFAULT ? String(col.DATA_DEFAULT) : undefined,
             })),
           });
         }
@@ -171,14 +171,14 @@ export function migrateCommand(
           const columnsResult = await connectionManager.query(columnsSql);
 
           tables.push({
-            name: tableName,
+            name: tableName as string,
             schema,
             columns: (columnsResult.rows || []).map((col: Record<string, unknown>) => ({
-              name: col.COLUMN_NAME,
-              dataType: col.DATA_TYPE,
+              name: col.COLUMN_NAME as string,
+              dataType: col.DATA_TYPE as string,
               typeParams: col.DATA_LENGTH ? String(col.DATA_LENGTH) : undefined,
               nullable: col.NULLABLE === 'Y',
-              defaultValue: col.DATA_DEFAULT || undefined,
+              defaultValue: col.DATA_DEFAULT ? String(col.DATA_DEFAULT) : undefined,
             })),
           });
         }
@@ -217,7 +217,7 @@ export function migrateCommand(
     .option('--batch-size <size>', '批次大小', '10000')
     .option('--parallel <n>', '并行数', '4')
     .option('--skip-errors', '跳过错误继续', false)
-    .action(async (options) => {
+    .action(async (_options) => {
       const spinner = ora('正在执行数据迁移...').start();
 
       try {
@@ -283,11 +283,11 @@ export function migrateCommand(
               name: tableName,
               schema,
               columns: (columnsResult.rows || []).map((col: Record<string, unknown>) => ({
-                name: col.COLUMN_NAME,
-                dataType: col.DATA_TYPE,
+                name: col.COLUMN_NAME as string,
+                dataType: col.DATA_TYPE as string,
                 typeParams: col.DATA_LENGTH ? String(col.DATA_LENGTH) : undefined,
                 nullable: col.NULLABLE === 'Y',
-                defaultValue: col.DATA_DEFAULT || undefined,
+                defaultValue: col.DATA_DEFAULT ? String(col.DATA_DEFAULT) : undefined,
               })),
             });
           }
@@ -495,7 +495,7 @@ export function migrateCommand(
     .option('--tables <tables>', '指定表（逗号分隔）')
     .option('-o, --output <file>', '输出文件路径')
     .option('-f, --format <format>', '输出格式 (text/json/html)', 'text')
-    .action(async (options) => {
+    .action(async (_options) => {
       const spinner = ora('正在对比结构差异...').start();
 
       try {
@@ -585,14 +585,14 @@ export function migrateCommand(
               const columnsResult = await connectionManager.query(columnsSql);
 
               tableInfos.push({
-                name: tableName,
+                name: tableName as string,
                 schema: schemaName,
                 columns: (columnsResult.rows || []).map((col: Record<string, unknown>) => ({
-                  name: col.COLUMN_NAME,
-                  dataType: col.DATA_TYPE,
+                  name: col.COLUMN_NAME as string,
+                  dataType: col.DATA_TYPE as string,
                   typeParams: col.DATA_LENGTH ? String(col.DATA_LENGTH) : undefined,
                   nullable: col.NULLABLE === 'Y',
-                  defaultValue: col.DATA_DEFAULT || undefined,
+                  defaultValue: col.DATA_DEFAULT ? String(col.DATA_DEFAULT) : undefined,
                 })),
               });
             }
@@ -657,7 +657,7 @@ export function migrateCommand(
             const sqlInput = await input({
               message: '请输入 SQL 语句:',
             });
-            const converter = new SqlConverter(sourceType as DatabaseType);
+            const converter = new SqlConverter({ from: sourceType as DatabaseType });
             const result = converter.convert(sqlInput);
             spinner.succeed('转换完成');
             console.log(chalk.cyan('\n转换后 SQL:'));

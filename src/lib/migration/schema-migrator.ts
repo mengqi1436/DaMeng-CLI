@@ -17,8 +17,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import chalk from 'chalk';
-import { TypeMapper, DatabaseType as TypeMapperDatabaseType, createTypeMapper, MappingResult } from './type-mapper';
-import { SqlConverter, createSqlConverter, ConversionResult, DatabaseType as ConverterDatabaseType } from './converter';
+import { TypeMapper, DatabaseType as TypeMapperDatabaseType, createTypeMapper } from './type-mapper';
+import { createSqlConverter, DatabaseType as ConverterDatabaseType } from './converter';
 
 // ============================================================================
 // 接口定义
