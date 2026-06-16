@@ -2,8 +2,6 @@
   "name": "dmcli",
   "version": "1.0.0",
   "description": "达梦数据库命令行工具 - 支持多连接管理",
-  "main": "dist/api.js",
-  "types": "dist/api.d.ts",
   "bin": {
     "dm": "dist/cli.js"
   },
